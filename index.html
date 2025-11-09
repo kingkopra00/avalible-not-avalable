@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مخازن الصيدلة</title>
+    <title>نظام إدارة مخازن الصيدلة - GitHub</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -51,31 +50,6 @@
             direction: rtl;
             width: 100%;
             max-width: 400px;
-        }
-        .file-input {
-            margin: 25px 0;
-        }
-        .file-input input {
-            display: none;
-        }
-        .file-label {
-            display: inline-block;
-            padding: 16px 40px;
-            background: #3498db;
-            color: white;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2rem;
-            transition: background 0.3s;
-        }
-        .file-label:hover {
-            background: #2980b9;
-        }
-        .filename {
-            margin-top: 15px;
-            color: #555;
-            font-size: 1.05rem;
         }
         .start-btn {
             margin-top: 25px;
@@ -266,35 +240,32 @@
 </head>
 <body>
     <div class="container">
-        <!-- شاشة الرفع -->
+        <!-- شاشة اختيار المخزن -->
         <div id="upload-screen">
             <header>
                 <h1>نظام إدارة مخازن الصيدلة</h1>
+                <p>البيانات من مستودع GitHub: kingkopra00/avalible-not-avalable</p>
             </header>
             <div class="upload-section">
                 <div class="warehouse-select">
                     <label>اختر المخزن:</label><br>
                     <select id="warehouse-select">
                         <option value="">-- اختر المخزن --</option>
-                        <option value="ampoules">مخزن الأمبولات</option>
-                        <option value="sensitive">مخزن الحياتية</option>
-                        <option value="powders">مخزن المساحيق</option>
-                        <option value="solutions">مخزن المحاليل</option>
-                        <option value="tablets">مخزن الأقراص</option>
+                        <option value="antibiotics">المضادات الحيوية</option>
+                        <option value="antiseptics">المطهرات</option>
+                        <option value="fluids">المحاليل والسوائل</option>
+                        <option value="suspentions">المستحضرات المُعلَّقة</option>
+                        <option value="tables">الأقراص</option>
+                        <option value="vials">القوارير والأمبولات</option>
                     </select>
                 </div>
-                <div class="file-input">
-                    <input type="file" id="excel-file" accept=".xlsx,.xls">
-                    <label for="excel-file" class="file-label">رفع ملف Excel</label>
-                    <div class="filename" id="filename">لم يتم رفع ملف</div>
-                </div>
-                <button class="start-btn" id="start-btn" disabled>بدء الإدخال</button>
+                <button class="start-btn" id="start-btn" disabled>تحميل البيانات وبدء الإدخال</button>
             </div>
         </div>
 
         <!-- شاشة إدخال الحالة -->
         <div id="input-screen" class="input-screen">
-            <div class="warehouse-title" id="current-warehouse-title">مخزن الحياتية</div>
+            <div class="warehouse-title" id="current-warehouse-title">جاري التحميل...</div>
             <div class="material-name" id="current-material">جاري التحميل...</div>
             
             <div class="current-status-display status-none-display" id="current-status-display">
@@ -341,7 +312,7 @@
             <div class="action-buttons">
                 <button class="action-btn print-btn" id="print-btn">طباعة</button>
                 <button class="action-btn export-btn" id="export-btn">تصدير Excel</button>
-                <button class="action-btn back-btn" id="back-to-upload">العودة للرفع</button>
+                <button class="action-btn back-btn" id="back-to-upload">العودة للاختيار</button>
             </div>
         </div>
     </div>
@@ -353,19 +324,29 @@
         let results = {};
 
         const warehouseNames = {
-            'ampoules': 'مخزن الأمبولات',
-            'sensitive': 'مخزن الحياتية',
-            'powders': 'مخزن المساحيق',
-            'solutions': 'مخزن المحاليل',
-            'tablets': 'مخزن الأقراص'
+            'antibiotics': 'مخزن المضادات الحيوية',
+            'antiseptics': 'مخزن المطهرات',
+            'fluids': 'مخزن المحاليل والسوائل',
+            'suspentions': 'مخزن المستحضرات المعلقة',
+            'tables': 'مخزن الأقراص',
+            'vials': 'مخزن القوارير والأمبولات'
+        };
+
+        // التصحيح: روابط الملفات الصحيحة من مستودع GitHub
+        const githubBaseUrl = 'https://raw.githubusercontent.com/kingkopra00/avalible-not-avalable/main/';
+        const fileMap = {
+            'antibiotics': 'antibiotics.xlsx',
+            'antiseptics': 'antiseptics.xlsx',
+            'fluids': 'fluids.xlsx',
+            'suspentions': 'suspentions.xlsx',
+            'tables': 'tables.xlsx',
+            'vials': 'vials.xlsx'
         };
 
         const uploadScreen = document.getElementById('upload-screen');
         const inputScreen = document.getElementById('input-screen');
         const resultsScreen = document.getElementById('results-screen');
         const warehouseSelect = document.getElementById('warehouse-select');
-        const fileInput = document.getElementById('excel-file');
-        const filenameDiv = document.getElementById('filename');
         const startBtn = document.getElementById('start-btn');
         const currentWarehouseTitle = document.getElementById('current-warehouse-title');
         const currentMaterialDiv = document.getElementById('current-material');
@@ -384,55 +365,39 @@
         const exportBtn = document.getElementById('export-btn');
         const backToUpload = document.getElementById('back-to-upload');
 
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                filenameDiv.textContent = e.target.files[0].name;
-                checkStartEnabled();
-            } else {
-                filenameDiv.textContent = 'لم يتم رفع ملف';
-                checkStartEnabled();
-            }
+        warehouseSelect.addEventListener('change', () => {
+            startBtn.disabled = !warehouseSelect.value;
         });
 
-        warehouseSelect.addEventListener('change', checkStartEnabled);
-
-        function checkStartEnabled() {
-            startBtn.disabled = !(warehouseSelect.value && fileInput.files.length > 0);
-        }
-
-        async function loadMaterialsFromFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-                        const items = [];
-                        for (let i = 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            if (row && row[0] && row[0].toString().trim()) {
-                                items.push(row[0].toString().trim());
-                            }
-                        }
-                        resolve(items);
-                    } catch (err) {
-                        reject(err);
+        async function loadMaterialsFromGitHub(filename) {
+            const url = githubBaseUrl + filename;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`فشل تحميل الملف: ${response.status} ${response.statusText}`);
+                const data = await response.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                const items = [];
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row[0] && row[0].toString().trim()) {
+                        items.push(row[0].toString().trim());
                     }
-                };
-                reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
-            });
+                }
+                return items;
+            } catch (err) {
+                throw new Error('خطأ في تحميل ملف المخزن من GitHub: ' + err.message);
+            }
         }
 
         startBtn.addEventListener('click', async function() {
             currentWarehouse = warehouseSelect.value;
-            const file = fileInput.files[0];
+            const filename = fileMap[currentWarehouse];
             try {
-                materials = await loadMaterialsFromFile(file);
+                materials = await loadMaterialsFromGitHub(filename);
                 if (materials.length === 0) {
-                    alert('لم يتم العثور على أي مواد في الملف!');
+                    alert('الملف فارغ أو لا يحتوي على مواد صالحة!');
                     return;
                 }
                 results = {};
@@ -441,7 +406,8 @@
                 uploadScreen.style.display = 'none';
                 inputScreen.style.display = 'block';
             } catch (err) {
-                alert('خطأ في قراءة الملف: ' + err.message);
+                console.error(err);
+                alert('فشل تحميل البيانات من GitHub. تأكد من اتصال الإنترنت وصحة الرابط.');
             }
         });
 
@@ -532,6 +498,12 @@
             }
         });
 
+        quantityInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                quantitySubmit.click();
+            }
+        });
+
         prevBtn.addEventListener('click', function() {
             if (currentIndex > 0) {
                 currentIndex--;
@@ -555,14 +527,13 @@
         function generateReport() {
             reportWarehouseTitle.textContent = warehouseNames[currentWarehouse];
             
-            // ✅ التاريخ الميلادي بالعربية (مثال: الاثنين، 7 أبريل 2025)
             const now = new Date();
             const formatter = new Intl.DateTimeFormat('ar-SA', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-                calendar: 'gregory' // يضمن استخدام التقويم الميلادي
+                calendar: 'gregory'
             });
             const gregorianDate = formatter.format(now);
             reportDate.textContent = `تاريخ الطباعة: ${gregorianDate}`;
@@ -612,12 +583,14 @@
         backToUpload.addEventListener('click', function() {
             resultsScreen.style.display = 'none';
             uploadScreen.style.display = 'block';
-            fileInput.value = '';
-            filenameDiv.textContent = 'لم يتم رفع ملف';
             warehouseSelect.value = '';
-            checkStartEnabled();
+            startBtn.disabled = true;
+        });
+
+        // تهيئة الواجهة عند التحميل
+        document.addEventListener('DOMContentLoaded', function() {
+            // يمكن إضافة أي تهيئات أولية هنا
         });
     </script>
 </body>
 </html>
-```
