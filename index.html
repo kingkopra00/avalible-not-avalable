@@ -30,15 +30,6 @@
             color: white;
             padding: 25px;
             text-align: center;
-            position: relative;
-        }
-        .pharmacist-name {
-            position: absolute;
-            bottom: 5px;
-            right: 15px;
-            font-size: 0.9rem;
-            opacity: 0.9;
-            font-weight: bold;
         }
         h1 {
             font-size: 1.8rem;
@@ -234,33 +225,44 @@
             font-size: 1.1rem;
             margin-top: 10px;
         }
-        .pharmacist-signature {
-            color: #2c3e50;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-top: 5px;
+        
+        .status-section {
+            margin: 30px 0;
+            page-break-inside: avoid;
         }
+        .status-section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        .section-available { background: #27ae60; }
+        .section-shortage { background: #f39c12; }
+        .section-missing { background: #e74c3c; }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 15px 0;
+            page-break-inside: avoid;
         }
         th, td {
-            padding: 16px;
+            padding: 12px;
             text-align: center;
             border: 1px solid #ddd;
         }
         th {
             background: #34495e;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
         tr:nth-child(even) {
             background: #f8f9fa;
         }
-        .status-available-row { background-color: #e8f5e9; }
-        .status-shortage-row { background-color: #fff8e1; }
-        .status-missing-row { background-color: #ffebee; }
+        
         .action-buttons {
             text-align: center;
             margin-top: 30px;
@@ -278,6 +280,132 @@
         .print-btn { background: #3498db; }
         .export-btn { background: #2ecc71; }
         .back-btn { background: #e74c3c; }
+
+        .designer-footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+
+        /* CSS للطباعة - محسّن بشكل شامل */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                color: #000 !important;
+            }
+            .container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                padding: 20px !important;
+                background: white !important;
+                width: 100% !important;
+            }
+            .action-buttons, .designer-footer, .input-screen, .upload-screen {
+                display: none !important;
+            }
+            .results-screen {
+                display: block !important;
+                padding: 0 !important;
+            }
+            .status-section {
+                page-break-inside: avoid !important;
+                margin: 25px 0 !important;
+                break-inside: avoid !important;
+            }
+            .status-section-title {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin: 15px 0 !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+            }
+            th, td {
+                padding: 8px 10px !important;
+                font-size: 0.9rem !important;
+                border: 1px solid #000 !important;
+            }
+            th {
+                background: #000 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .report-header {
+                margin-bottom: 20px !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+            .report-title {
+                font-size: 1.6rem !important;
+                font-weight: bold !important;
+                color: #000 !important;
+            }
+            .status-summary {
+                flex-direction: row !important;
+                justify-content: space-around !important;
+                margin: 15px 0 !important;
+                padding: 10px !important;
+                background: white !important;
+                border: 1px solid #000 !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+            .status-item {
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                min-width: 80px !important;
+            }
+            .status-count {
+                font-size: 1.2rem !important;
+                font-weight: bold !important;
+            }
+            .report-date {
+                color: #000 !important;
+                font-size: 1rem !important;
+                margin-top: 10px !important;
+                font-weight: bold !important;
+            }
+            /* ضمان عدم كسر الجداول */
+            tbody {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            /* هوامش الصفحة */
+            @page {
+                margin: 15mm 10mm 15mm 10mm !important;
+                size: A4 portrait !important;
+            }
+            /* ضمان أن كل قسم يبدأ من صفحة جديدة إذا كان سيكسر */
+            .status-section:not(:first-child) {
+                page-break-before: auto !important;
+                break-before: auto !important;
+            }
+            /* تحسين الخطوط للطباعة */
+            body, table, th, td {
+                font-family: 'Times New Roman', Times, serif !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            /* إخفاء جميع العناصر غير الضرورية */
+            header, nav, footer, .sidebar, .ads, .buttons, .controls {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -287,7 +415,6 @@
             <header>
                 <h1>نظام إدارة مخازن الصيدلة</h1>
                 <p>البيانات من مستودع GitHub: kingkopra00/avalible-not-avalable</p>
-                <div class="pharmacist-name">الصيدلاني: علي محمد حسن الناجي</div>
             </header>
             <div class="upload-section">
                 <div class="warehouse-select">
@@ -303,6 +430,9 @@
                     </select>
                 </div>
                 <button class="start-btn" id="start-btn" disabled>تحميل البيانات وبدء الإدخال</button>
+            </div>
+            <div class="designer-footer">
+                مصمم البرنامج: علي محمد حسن الناجي
             </div>
         </div>
 
@@ -332,6 +462,9 @@
                 <button class="nav-btn" id="next-btn">التالي</button>
             </div>
             <button class="finish-btn" id="finish-btn">إنهاء وإظهار التقرير</button>
+            <div class="designer-footer">
+                مصمم البرنامج: علي محمد حسن الناجي
+            </div>
         </div>
 
         <!-- شاشة النتائج -->
@@ -353,24 +486,59 @@
                     </div>
                 </div>
                 <div class="report-date" id="report-date">1 يناير 2025</div>
-                <div class="pharmacist-signature">الصيدلاني: علي محمد حسن الناجي</div>
             </div>
-            <table id="results-table">
-                <thead>
-                    <tr>
-                        <th>اسم المادة</th>
-                        <th>الحالة</th>
-                        <th>الكمية</th>
-                    </tr>
-                </thead>
-                <tbody id="results-body">
-                    <!-- يتم ملؤها لاحقًا -->
-                </tbody>
-            </table>
+
+            <div id="available-section" class="status-section" style="display: none;">
+                <div class="status-section-title section-available">المواد المتوفرة</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم المادة</th>
+                            <th>الكمية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="available-body">
+                        <!-- يتم ملؤها لاحقًا -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="shortage-section" class="status-section" style="display: none;">
+                <div class="status-section-title section-shortage">المواد الشحيحة</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم المادة</th>
+                            <th>الكمية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shortage-body">
+                        <!-- يتم ملؤها لاحقًا -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="missing-section" class="status-section" style="display: none;">
+                <div class="status-section-title section-missing">المواد المفقودة</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم المادة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="missing-body">
+                        <!-- يتم ملؤها لاحقًا -->
+                    </tbody>
+                </table>
+            </div>
+
             <div class="action-buttons">
                 <button class="action-btn print-btn" id="print-btn">طباعة</button>
                 <button class="action-btn export-btn" id="export-btn">تصدير Excel</button>
                 <button class="action-btn back-btn" id="back-to-upload">العودة للاختيار</button>
+            </div>
+            <div class="designer-footer">
+                مصمم البرنامج: علي محمد حسن الناجي
             </div>
         </div>
     </div>
@@ -418,13 +586,18 @@
         const finishBtn = document.getElementById('finish-btn');
         const reportWarehouseTitle = document.getElementById('report-warehouse-title');
         const reportDate = document.getElementById('report-date');
-        const resultsBody = document.getElementById('results-body');
-        const printBtn = document.getElementById('print-btn');
-        const exportBtn = document.getElementById('export-btn');
-        const backToUpload = document.getElementById('back-to-upload');
         const countAvailable = document.getElementById('count-available');
         const countShortage = document.getElementById('count-shortage');
         const countMissing = document.getElementById('count-missing');
+        const availableSection = document.getElementById('available-section');
+        const shortageSection = document.getElementById('shortage-section');
+        const missingSection = document.getElementById('missing-section');
+        const availableBody = document.getElementById('available-body');
+        const shortageBody = document.getElementById('shortage-body');
+        const missingBody = document.getElementById('missing-body');
+        const printBtn = document.getElementById('print-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const backToUpload = document.getElementById('back-to-upload');
 
         warehouseSelect.addEventListener('change', () => {
             startBtn.disabled = !warehouseSelect.value;
@@ -599,73 +772,96 @@
             const gregorianDate = formatter.format(now);
             reportDate.textContent = `تاريخ الطباعة: ${gregorianDate}`;
 
-            // حساب الإحصائيات
-            let availableCount = 0;
-            let shortageCount = 0;
-            let missingCount = 0;
+            // تصنيف المواد حسب الحالة
+            const availableItems = [];
+            const shortageItems = [];
+            const missingItems = [];
 
-            // إنشاء مصفوفة للمواد مع حالاتها للترتيب
-            const materialsWithStatus = materials.map((material, i) => {
+            materials.forEach((material, i) => {
                 const item = results[i] || { status: 'غير مدخل', quantity: null };
-                if (item.status === 'available') availableCount++;
-                else if (item.status === 'shortage') shortageCount++;
-                else if (item.status === 'missing') missingCount++;
-                
-                return {
-                    name: material,
-                    status: item.status,
-                    quantity: item.quantity,
-                    statusText: getStatusText(item.status)
-                };
+                if (item.status === 'available') {
+                    availableItems.push({ name: material, quantity: item.quantity });
+                } else if (item.status === 'shortage') {
+                    shortageItems.push({ name: material, quantity: item.quantity });
+                } else if (item.status === 'missing') {
+                    missingItems.push({ name: material, quantity: item.quantity });
+                }
             });
 
-            // تحديث عدادات الحالات
-            countAvailable.textContent = availableCount;
-            countShortage.textContent = shortageCount;
-            countMissing.textContent = missingCount;
+            // حساب الإحصائيات
+            countAvailable.textContent = availableItems.length;
+            countShortage.textContent = shortageItems.length;
+            countMissing.textContent = missingItems.length;
 
-            // ترتيب المواد حسب الحالة: متوفر أولاً، ثم شحيح، ثم مفقود
-            materialsWithStatus.sort((a, b) => {
-                const statusOrder = { 'available': 1, 'shortage': 2, 'missing': 3, 'غير مدخل': 4 };
-                return statusOrder[a.status] - statusOrder[b.status];
-            });
+            // ترتيب المواد أبجدياً
+            availableItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            shortageItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            missingItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
-            // عرض المواد المرتبة
-            resultsBody.innerHTML = '';
-            materialsWithStatus.forEach(item => {
-                const row = document.createElement('tr');
-                let rowClass = '';
-                if (item.status === 'available') rowClass = 'status-available-row';
-                else if (item.status === 'shortage') rowClass = 'status-shortage-row';
-                else if (item.status === 'missing') rowClass = 'status-missing-row';
-                
-                row.className = rowClass;
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${item.statusText}</td>
-                    <td>${item.quantity !== null ? item.quantity : '—'}</td>
-                `;
-                resultsBody.appendChild(row);
-            });
-        }
+            // عرض المواد المتوفرة
+            if (availableItems.length > 0) {
+                availableSection.style.display = 'block';
+                availableBody.innerHTML = '';
+                availableItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.quantity !== null ? item.quantity : 'متوفر'}</td>
+                    `;
+                    availableBody.appendChild(row);
+                });
+            } else {
+                availableSection.style.display = 'none';
+            }
 
-        function getStatusText(status) {
-            if (status === 'available') return 'متوفر';
-            else if (status === 'shortage') return 'شحيح';
-            else if (status === 'missing') return 'مفقود';
-            else return 'غير مدخل';
+            // عرض المواد الشحيحة
+            if (shortageItems.length > 0) {
+                shortageSection.style.display = 'block';
+                shortageBody.innerHTML = '';
+                shortageItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.quantity !== null ? item.quantity : 'شحيح'}</td>
+                    `;
+                    shortageBody.appendChild(row);
+                });
+            } else {
+                shortageSection.style.display = 'none';
+            }
+
+            // عرض المواد المفقودة
+            if (missingItems.length > 0) {
+                missingSection.style.display = 'block';
+                missingBody.innerHTML = '';
+                missingItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${item.name}</td>`;
+                    missingBody.appendChild(row);
+                });
+            } else {
+                missingSection.style.display = 'none';
+            }
         }
 
         printBtn.addEventListener('click', function() {
-            window.print();
+            // تحسين الطباعة: ضمان تحميل كل المحتوى قبل الطباعة
+            setTimeout(function() {
+                window.print();
+            }, 500);
         });
 
         exportBtn.addEventListener('click', function() {
             const wsData = [];
             wsData.push(['اسم المادة', 'الحالة', 'الكمية']);
+            
             materials.forEach((material, i) => {
                 const item = results[i] || { status: 'غير مدخل', quantity: null };
-                let statusText = getStatusText(item.status);
+                let statusText = '';
+                if (item.status === 'available') statusText = 'متوفر';
+                else if (item.status === 'shortage') statusText = 'شحيح';
+                else if (item.status === 'missing') statusText = 'مفقود';
+                else statusText = 'غير مدخل';
                 wsData.push([material, statusText, item.quantity || '']);
             });
 
