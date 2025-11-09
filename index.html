@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام إدارة مخازن الصيدلة - GitHub</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- إضافة مكتبات jsPDF و html2canvas بإصدارات محدثة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -224,6 +227,7 @@
             color: #7f8c8d;
             font-size: 1.1rem;
             margin-top: 10px;
+            font-weight: bold;
         }
         
         .status-section {
@@ -266,19 +270,25 @@
         .action-buttons {
             text-align: center;
             margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         .action-btn {
-            padding: 16px 35px;
-            margin: 0 10px;
+            padding: 16px 25px;
+            margin: 0 5px;
             border: none;
             border-radius: 10px;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.0rem;
             font-weight: bold;
             cursor: pointer;
+            min-width: 140px;
         }
         .print-btn { background: #3498db; }
-        .export-btn { background: #2ecc71; }
+        .export-excel-btn { background: #2ecc71; }
+        .export-pdf-btn { background: #9b59b6; }
         .back-btn { background: #e74c3c; }
 
         .designer-footer {
@@ -534,7 +544,8 @@
 
             <div class="action-buttons">
                 <button class="action-btn print-btn" id="print-btn">طباعة</button>
-                <button class="action-btn export-btn" id="export-btn">تصدير Excel</button>
+                <button class="action-btn export-excel-btn" id="export-excel-btn">تصدير Excel</button>
+                <button class="action-btn export-pdf-btn" id="export-pdf-btn">تصدير PDF</button>
                 <button class="action-btn back-btn" id="back-to-upload">العودة للاختيار</button>
             </div>
             <div class="designer-footer">
@@ -548,14 +559,15 @@
         let materials = [];
         let currentIndex = 0;
         let results = {};
+        let currentReportDate = new Date();
 
         const warehouseNames = {
-            'antibiotics': 'مخزن المضادات الحيوية',
-            'antiseptics': 'مخزن المطهرات',
-            'fluids': 'مخزن المحاليل والسوائل',
-            'suspentions': 'مخزن المساحيق',
-            'tables': 'مخزن الأقراص',
-            'vials': 'مخزن الامبولات و الفيالات'
+            'antibiotics': 'المضادات الحيوية',
+            'antiseptics': 'المطهرات',
+            'fluids': 'المحاليل والسوائل',
+            'suspentions': 'المساحيق',
+            'tables': 'الأقراص',
+            'vials': 'الامبولات و الفيالات'
         };
 
         // التصحيح: روابط الملفات الصحيحة من مستودع GitHub
@@ -596,8 +608,15 @@
         const shortageBody = document.getElementById('shortage-body');
         const missingBody = document.getElementById('missing-body');
         const printBtn = document.getElementById('print-btn');
-        const exportBtn = document.getElementById('export-btn');
+        const exportExcelBtn = document.getElementById('export-excel-btn');
+        const exportPdfBtn = document.getElementById('export-pdf-btn');
         const backToUpload = document.getElementById('back-to-upload');
+
+        // دالة لتحويل الأرقام الإنجليزية إلى عربية
+        function toArabicNumbers(str) {
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return str.replace(/\d/g, match => arabicNumbers[match]);
+        }
 
         warehouseSelect.addEventListener('change', () => {
             startBtn.disabled = !warehouseSelect.value;
@@ -646,7 +665,7 @@
         });
 
         function displayCurrentMaterial() {
-            currentWarehouseTitle.textContent = warehouseNames[currentWarehouse];
+            currentWarehouseTitle.textContent = `مخزن ${warehouseNames[currentWarehouse]}`;
             currentMaterialDiv.textContent = materials[currentIndex];
             
             prevBtn.disabled = currentIndex === 0;
@@ -753,24 +772,24 @@
         });
 
         finishBtn.addEventListener('click', function() {
+            currentReportDate = new Date();
             generateReport();
             inputScreen.style.display = 'none';
             resultsScreen.style.display = 'block';
         });
 
         function generateReport() {
-            reportWarehouseTitle.textContent = warehouseNames[currentWarehouse];
+            reportWarehouseTitle.textContent = `مخزن ${warehouseNames[currentWarehouse]}`;
             
-            const now = new Date();
             const formatter = new Intl.DateTimeFormat('ar-SA', {
                 weekday: 'long',
                 year: 'numeric',
-                month: 'long',
+                month: 'numeric',
                 day: 'numeric',
                 calendar: 'gregory'
             });
-            const gregorianDate = formatter.format(now);
-            reportDate.textContent = `تاريخ الطباعة: ${gregorianDate}`;
+            const gregorianDate = formatter.format(currentReportDate);
+            reportDate.textContent = `تاريخ التقرير: ${gregorianDate}`;
 
             // تصنيف المواد حسب الحالة
             const availableItems = [];
@@ -851,7 +870,7 @@
             }, 500);
         });
 
-        exportBtn.addEventListener('click', function() {
+        exportExcelBtn.addEventListener('click', function() {
             const wsData = [];
             wsData.push(['اسم المادة', 'الحالة', 'الكمية']);
             
@@ -868,7 +887,89 @@
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "تقرير المخزن");
-            XLSX.writeFile(wb, `تقرير_${currentWarehouse}_${new Date().toISOString().slice(0,10)}.xlsx`);
+            
+            // إنشاء اسم الملف بالتنسيق المطلوب
+            const dayName = currentReportDate.toLocaleDateString('ar-SA', { weekday: 'long' });
+            const day = currentReportDate.getDate().toString();
+            const month = (currentReportDate.getMonth() + 1).toString();
+            const year = currentReportDate.getFullYear().toString();
+            
+            const filename = `مخزن ${warehouseNames[currentWarehouse]}-${dayName} ${toArabicNumbers(day)}-${toArabicNumbers(month)}-${toArabicNumbers(year)}.xlsx`;
+            XLSX.writeFile(wb, filename);
+        });
+
+        exportPdfBtn.addEventListener('click', function() {
+            // الحصول على أسماء الأيام باللغة العربية
+            const arabicDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const dayName = arabicDays[currentReportDate.getDay()];
+            const day = currentReportDate.getDate().toString();
+            const month = (currentReportDate.getMonth() + 1).toString();
+            const year = currentReportDate.getFullYear().toString();
+            
+            const filename = `مخزن ${warehouseNames[currentWarehouse]}-${dayName} ${toArabicNumbers(day)}-${toArabicNumbers(month)}-${toArabicNumbers(year)}.pdf`;
+            
+            alert('جاري إنشاء ملف PDF. يرجى الانتظار...');
+            
+            // نسخ المحتوى الحالي للشاشة النتائج
+            const printContent = document.createElement('div');
+            printContent.innerHTML = resultsScreen.innerHTML;
+            printContent.style.padding = '20px';
+            printContent.style.width = '750px';
+            printContent.style.margin = '0 auto';
+            printContent.style.fontFamily = "'Times New Roman', Times, serif";
+            printContent.style.direction = 'rtl';
+            printContent.style.backgroundColor = 'white';
+            
+            // إخفاء أزرار التحكم في النسخة المؤقتة
+            const actionButtons = printContent.querySelector('.action-buttons');
+            const designerFooter = printContent.querySelector('.designer-footer');
+            if (actionButtons) actionButtons.style.display = 'none';
+            if (designerFooter) designerFooter.style.display = 'none';
+            
+            // إضافة النسخة المؤقتة إلى الهيكل
+            document.body.appendChild(printContent);
+            printContent.style.position = 'absolute';
+            printContent.style.left = '-9999px';
+            printContent.style.top = '-9999px';
+            
+            // استخدام html2canvas لإنشاء صورة من المحتوى
+            html2canvas(printContent, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                onclone: function(document) {
+                    // يمكن إضافة أي تعديلات إضافية هنا
+                }
+            }).then(function(canvas) {
+                // إزالة النسخة المؤقتة
+                document.body.removeChild(printContent);
+                
+                try {
+                    // إنشاء ملف PDF
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save(filename);
+                    
+                    alert('تم إنشاء ملف PDF بنجاح!');
+                } catch (error) {
+                    console.error('خطأ في إنشاء PDF:', error);
+                    alert('حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
+                }
+            }).catch(function(error) {
+                console.error('خطأ في التقاط الصورة:', error);
+                alert('حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
+                document.body.removeChild(printContent);
+            });
         });
 
         backToUpload.addEventListener('click', function() {
