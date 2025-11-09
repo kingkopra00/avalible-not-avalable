@@ -30,6 +30,15 @@
             color: white;
             padding: 25px;
             text-align: center;
+            position: relative;
+        }
+        .pharmacist-name {
+            position: absolute;
+            bottom: 5px;
+            right: 15px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: bold;
         }
         h1 {
             font-size: 1.8rem;
@@ -197,9 +206,39 @@
             color: #2c3e50;
             margin-bottom: 5px;
         }
+        .status-summary {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .status-item {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .status-available { background: #d4edda; color: #155724; }
+        .status-shortage { background: #fff3cd; color: #856404; }
+        .status-missing { background: #f8d7da; color: #721c24; }
+        .status-count {
+            font-size: 1.4rem;
+            margin-top: 5px;
+            font-weight: bold;
+        }
         .report-date {
             color: #7f8c8d;
             font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        .pharmacist-signature {
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 5px;
         }
         table {
             width: 100%;
@@ -219,6 +258,9 @@
         tr:nth-child(even) {
             background: #f8f9fa;
         }
+        .status-available-row { background-color: #e8f5e9; }
+        .status-shortage-row { background-color: #fff8e1; }
+        .status-missing-row { background-color: #ffebee; }
         .action-buttons {
             text-align: center;
             margin-top: 30px;
@@ -245,6 +287,7 @@
             <header>
                 <h1>نظام إدارة مخازن الصيدلة</h1>
                 <p>البيانات من مستودع GitHub: kingkopra00/avalible-not-avalable</p>
+                <div class="pharmacist-name">الصيدلاني: علي محمد حسن الناجي</div>
             </header>
             <div class="upload-section">
                 <div class="warehouse-select">
@@ -254,9 +297,9 @@
                         <option value="antibiotics">المضادات الحيوية</option>
                         <option value="antiseptics">المطهرات</option>
                         <option value="fluids">المحاليل والسوائل</option>
-                        <option value="suspentions">المستحضرات المُعلَّقة</option>
+                        <option value="suspentions">المساحيق</option>
                         <option value="tables">الأقراص</option>
-                        <option value="vials">القوارير والأمبولات</option>
+                        <option value="vials">الامبولات و الفيالات</option>
                     </select>
                 </div>
                 <button class="start-btn" id="start-btn" disabled>تحميل البيانات وبدء الإدخال</button>
@@ -295,7 +338,22 @@
         <div id="results-screen" class="results-screen">
             <div class="report-header">
                 <div class="report-title" id="report-warehouse-title">مخزن الحياتية</div>
+                <div class="status-summary">
+                    <div class="status-item status-available">
+                        <div>المتوفر</div>
+                        <div class="status-count" id="count-available">0</div>
+                    </div>
+                    <div class="status-item status-shortage">
+                        <div>الشحيح</div>
+                        <div class="status-count" id="count-shortage">0</div>
+                    </div>
+                    <div class="status-item status-missing">
+                        <div>المفقود</div>
+                        <div class="status-count" id="count-missing">0</div>
+                    </div>
+                </div>
                 <div class="report-date" id="report-date">1 يناير 2025</div>
+                <div class="pharmacist-signature">الصيدلاني: علي محمد حسن الناجي</div>
             </div>
             <table id="results-table">
                 <thead>
@@ -327,9 +385,9 @@
             'antibiotics': 'مخزن المضادات الحيوية',
             'antiseptics': 'مخزن المطهرات',
             'fluids': 'مخزن المحاليل والسوائل',
-            'suspentions': 'مخزن المستحضرات المعلقة',
+            'suspentions': 'مخزن المساحيق',
             'tables': 'مخزن الأقراص',
-            'vials': 'مخزن القوارير والأمبولات'
+            'vials': 'مخزن الامبولات و الفيالات'
         };
 
         // التصحيح: روابط الملفات الصحيحة من مستودع GitHub
@@ -364,6 +422,9 @@
         const printBtn = document.getElementById('print-btn');
         const exportBtn = document.getElementById('export-btn');
         const backToUpload = document.getElementById('back-to-upload');
+        const countAvailable = document.getElementById('count-available');
+        const countShortage = document.getElementById('count-shortage');
+        const countMissing = document.getElementById('count-missing');
 
         warehouseSelect.addEventListener('change', () => {
             startBtn.disabled = !warehouseSelect.value;
@@ -538,23 +599,61 @@
             const gregorianDate = formatter.format(now);
             reportDate.textContent = `تاريخ الطباعة: ${gregorianDate}`;
 
-            resultsBody.innerHTML = '';
-            materials.forEach((material, i) => {
-                const item = results[i] || { status: 'غير مدخل', quantity: null };
-                let statusText = '';
-                if (item.status === 'available') statusText = 'متوفر';
-                else if (item.status === 'shortage') statusText = 'شحيح';
-                else if (item.status === 'missing') statusText = 'مفقود';
-                else statusText = 'غير مدخل';
+            // حساب الإحصائيات
+            let availableCount = 0;
+            let shortageCount = 0;
+            let missingCount = 0;
 
+            // إنشاء مصفوفة للمواد مع حالاتها للترتيب
+            const materialsWithStatus = materials.map((material, i) => {
+                const item = results[i] || { status: 'غير مدخل', quantity: null };
+                if (item.status === 'available') availableCount++;
+                else if (item.status === 'shortage') shortageCount++;
+                else if (item.status === 'missing') missingCount++;
+                
+                return {
+                    name: material,
+                    status: item.status,
+                    quantity: item.quantity,
+                    statusText: getStatusText(item.status)
+                };
+            });
+
+            // تحديث عدادات الحالات
+            countAvailable.textContent = availableCount;
+            countShortage.textContent = shortageCount;
+            countMissing.textContent = missingCount;
+
+            // ترتيب المواد حسب الحالة: متوفر أولاً، ثم شحيح، ثم مفقود
+            materialsWithStatus.sort((a, b) => {
+                const statusOrder = { 'available': 1, 'shortage': 2, 'missing': 3, 'غير مدخل': 4 };
+                return statusOrder[a.status] - statusOrder[b.status];
+            });
+
+            // عرض المواد المرتبة
+            resultsBody.innerHTML = '';
+            materialsWithStatus.forEach(item => {
                 const row = document.createElement('tr');
+                let rowClass = '';
+                if (item.status === 'available') rowClass = 'status-available-row';
+                else if (item.status === 'shortage') rowClass = 'status-shortage-row';
+                else if (item.status === 'missing') rowClass = 'status-missing-row';
+                
+                row.className = rowClass;
                 row.innerHTML = `
-                    <td>${material}</td>
-                    <td>${statusText}</td>
+                    <td>${item.name}</td>
+                    <td>${item.statusText}</td>
                     <td>${item.quantity !== null ? item.quantity : '—'}</td>
                 `;
                 resultsBody.appendChild(row);
             });
+        }
+
+        function getStatusText(status) {
+            if (status === 'available') return 'متوفر';
+            else if (status === 'shortage') return 'شحيح';
+            else if (status === 'missing') return 'مفقود';
+            else return 'غير مدخل';
         }
 
         printBtn.addEventListener('click', function() {
@@ -566,11 +665,7 @@
             wsData.push(['اسم المادة', 'الحالة', 'الكمية']);
             materials.forEach((material, i) => {
                 const item = results[i] || { status: 'غير مدخل', quantity: null };
-                let statusText = '';
-                if (item.status === 'available') statusText = 'متوفر';
-                else if (item.status === 'shortage') statusText = 'شحيح';
-                else if (item.status === 'missing') statusText = 'مفقود';
-                else statusText = 'غير مدخل';
+                let statusText = getStatusText(item.status);
                 wsData.push([material, statusText, item.quantity || '']);
             });
 
