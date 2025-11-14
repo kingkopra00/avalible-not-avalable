@@ -3,986 +3,555 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مخازن الصيدلة - GitHub</title>
+    <title>نظام الجرد الصيدلاني - النسخة النهائية المنسقة</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <!-- إضافة مكتبات jsPDF و html2canvas بإصدارات محدثة -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Tajawal', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --main-bg: #f0f2f5; --panel-bg: #ffffff; --accent: #2c3e50;
+            --success: #27ae60; --warning: #d35400; --danger: #c0392b; --info: #2980b9;
         }
-        body {
-            background: #f5f7fa;
-            padding: 20px;
-            direction: rtl;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-        h1 {
-            font-size: 1.8rem;
-        }
-        .upload-section {
-            padding: 30px;
-            text-align: center;
-        }
-        .warehouse-select {
-            margin: 20px 0;
-        }
-        select {
-            padding: 12px 25px;
-            font-size: 1.2rem;
-            border-radius: 12px;
-            border: 2px solid #ddd;
-            background: white;
-            direction: rtl;
-            width: 100%;
-            max-width: 400px;
-        }
-        .start-btn {
-            margin-top: 25px;
-            padding: 16px 50px;
-            background: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.3rem;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .start-btn:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', Tahoma, sans-serif; }
+        body { background: var(--main-bg); padding: 20px; direction: rtl; color: #333; }
+        
+        .container { 
+            max-width: 900px; margin: 0 auto; background: var(--panel-bg); 
+            border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); 
+            overflow: hidden; min-height: 90vh; display: flex; flex-direction: column;
         }
 
-        /* شاشة إدخال الحالة */
-        .input-screen {
-            display: none;
-            padding: 30px;
-            text-align: center;
+        /* === Header Styling === */
+        header.app-header { 
+            background: linear-gradient(135deg, #2c3e50, #34495e); 
+            color: white; padding: 30px; text-align: center; 
         }
-        .warehouse-title {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            margin-bottom: 10px;
+        h1 { font-size: 2rem; margin-bottom: 5px; font-weight: 800; }
+
+        /* === Report Preview Styling (Screen) === */
+        .report-paper {
+            background: white;
+            padding: 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 30px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
         }
-        .material-name {
-            font-size: 1.6rem;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            font-weight: bold;
-            color: #2c3e50;
-            border: 2px solid #e9ecef;
+
+        /* Official Header */
+        .official-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 30px;
         }
-        .current-status-display {
-            font-size: 1.3rem;
-            margin: 15px 0;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            min-height: 28px;
+        .oh-side { text-align: center; width: 200px; font-size: 0.9rem; font-weight: bold; line-height: 1.6; }
+        .oh-center { font-size: 3rem; color: #2c3e50; }
+        .report-title { text-align: center; margin: 20px 0; font-size: 1.5rem; text-decoration: underline; text-underline-offset: 8px; font-weight: 800; }
+
+        /* Summary Cards */
+        .status-summary { 
+            display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; 
+            flex-wrap: wrap;
         }
+        .status-card { 
+            background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; 
+            padding: 15px 25px; text-align: center; min-width: 120px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .sc-count { font-size: 1.8rem; font-weight: bold; display: block; margin-top: 5px; }
+        
+        /* Tables Styling */
+        .section-block { margin-bottom: 20px; }
+        .section-header { 
+            background: #34495e; color: white; padding: 8px 15px; 
+            font-weight: bold; border: 1px solid #333; border-bottom: none; 
+            font-size: 1.1rem;
+        }
+        
+        .report-table { 
+            width: 100%; border-collapse: collapse; 
+        }
+        
+        /* تنسيق الأعمدة لضمان تناسق الفواصل في الطباعة */
+        .report-table th:nth-child(1), .report-table td:nth-child(1) { width: 8%; text-align: center; }
+        .report-table th:nth-child(2), .report-table td:nth-child(2) { width: 62%; text-align: right; }
+        .report-table th:nth-child(3), .report-table td:nth-child(3) { width: 30%; text-align: center; }
+
+        .report-table th { 
+            background: #f1f2f6; color: #333; padding: 10px; 
+            border: 1px solid #333; font-weight: 800;
+        }
+        .report-table td { 
+            padding: 8px; border: 1px solid #333; 
+            vertical-align: middle; font-weight: 500;
+        }
+        
+        /* Signatures Footer */
+        .official-footer {
+            display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px;
+        }
+        .sig-box { text-align: center; width: 30%; }
+        .sig-line { border-top: 1px solid #333; margin-top: 40px; width: 80%; margin-left: auto; margin-right: auto; }
+
+        /* === Input Screen Elements === */
+        .upload-section, .input-screen { padding: 30px; flex: 1; }
+        .input-screen { display: none; text-align: center; }
+        
+        select { padding: 15px; font-size: 1.1rem; border-radius: 10px; border: 2px solid #ddd; width: 100%; max-width: 450px; margin: 20px 0; background: white; }
+        
+        .start-btn { padding: 15px 50px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .start-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        /* Material Card */
+        .material-card { background: #fff; padding: 40px 20px; border-radius: 16px; border: 2px solid #f1f2f6; margin: 20px 0; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+        .material-name { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 10px; }
+        
+        .current-status-display { font-size: 1.1rem; margin: 15px auto; padding: 10px 20px; border-radius: 50px; font-weight: bold; width: fit-content; }
         .status-available-display { background: #d4edda; color: #155724; }
         .status-shortage-display { background: #fff3cd; color: #856404; }
         .status-missing-display { background: #f8d7da; color: #721c24; }
-        .status-none-display { background: #e9ecef; color: #495057; }
+        .status-none-display { background: #f1f2f6; color: #95a5a6; }
 
-        .status-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin: 25px 0;
-        }
-        .status-btn {
-            padding: 20px;
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1.4rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .btn-available { background: #27ae60; }
-        .btn-shortage { background: #f39c12; }
-        .btn-missing { background: #e74c3c; }
-        .btn-quantity { background: #3498db; }
-        .quantity-section {
-            display: none;
-            margin: 25px 0;
-            width: 100%;
-            max-width: 300px;
-            margin: 25px auto;
-        }
-        .quantity-input {
-            padding: 16px;
-            font-size: 1.3rem;
-            text-align: center;
-            width: 100%;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            direction: ltr;
-        }
-        .quantity-submit {
-            margin-top: 15px;
-            padding: 14px;
-            background: #8e44ad;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-        }
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 25px;
-        }
-        .nav-btn {
-            padding: 16px 35px;
-            background: #95a5a6;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .nav-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .finish-btn {
-            margin-top: 25px;
-            padding: 16px 40px;
-            background: #8e44ad;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .status-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 30px auto; max-width: 650px; }
+        .status-btn { padding: 20px 10px; border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .btn-available { background: var(--success); }
+        .btn-shortage { background: var(--warning); }
+        .btn-missing { background: var(--danger); }
+        .btn-quantity { background: var(--info); }
 
-        /* شاشة النتائج */
-        .results-screen {
-            display: none;
-            padding: 30px;
-        }
-        .report-header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .report-title {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        .status-summary {
-            display: flex;
-            justify-content: space-around;
-            margin: 15px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
-        .status-item {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .status-available { background: #d4edda; color: #155724; }
-        .status-shortage { background: #fff3cd; color: #856404; }
-        .status-missing { background: #f8d7da; color: #721c24; }
-        .status-count {
-            font-size: 1.4rem;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-        .report-date {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-            margin-top: 10px;
-            font-weight: bold;
-        }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 40px; }
+        .nav-btn { padding: 10px 25px; background: white; border: 2px solid #eee; border-radius: 50px; cursor: pointer; font-weight: bold; }
         
-        .status-section {
-            margin: 30px 0;
-            page-break-inside: avoid;
-        }
-        .status-section-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            color: white;
-        }
-        .section-available { background: #27ae60; }
-        .section-shortage { background: #f39c12; }
-        .section-missing { background: #e74c3c; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            page-break-inside: avoid;
-        }
-        th, td {
-            padding: 12px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-        th {
-            background: #34495e;
-            color: white;
-            font-size: 1.1rem;
-        }
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        
-        .action-buttons {
-            text-align: center;
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .action-btn {
-            padding: 16px 25px;
-            margin: 0 5px;
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 1.0rem;
-            font-weight: bold;
-            cursor: pointer;
-            min-width: 140px;
-        }
-        .print-btn { background: #3498db; }
-        .export-excel-btn { background: #2ecc71; }
-        .export-pdf-btn { background: #9b59b6; }
-        .back-btn { background: #e74c3c; }
+        .search-container { position: relative; margin: 20px 0; }
+        .search-input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 10px; }
+        .suggestions-list { position: absolute; top: 105%; width: 100%; background: white; border: 1px solid #eee; border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .suggestion-item { padding: 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer; display: flex; justify-content: space-between; }
+        .suggestion-item:hover { background: #f9f9f9; }
 
-        .designer-footer {
-            text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            border-top: 1px solid #eee;
-            margin-top: 30px;
-        }
+        .quantity-section { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); z-index: 200; text-align: center; border: 2px solid var(--accent); }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 199; display: none; }
 
-        /* CSS للطباعة - محسّن بشكل شامل */
+        .finish-btn { margin-top: 30px; padding: 15px 40px; background: #8e44ad; color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+
+        .action-buttons { padding: 20px; background: #34495e; display: flex; justify-content: center; gap: 15px; border-radius: 0 0 12px 12px; }
+        .action-btn { padding: 12px 25px; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: bold; }
+
+        /* === PRINT MEDIA QUERY === */
         @media print {
-            body {
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                color: #000 !important;
-            }
-            .container {
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                max-width: 100% !important;
-                margin: 0 auto !important;
-                padding: 20px !important;
-                background: white !important;
-                width: 100% !important;
-            }
-            .action-buttons, .designer-footer, .input-screen, .upload-screen {
-                display: none !important;
-            }
-            .results-screen {
-                display: block !important;
-                padding: 0 !important;
-            }
-            .status-section {
-                page-break-inside: avoid !important;
-                margin: 25px 0 !important;
-                break-inside: avoid !important;
-            }
-            .status-section-title {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin: 15px 0 !important;
-                page-break-inside: auto !important;
-                break-inside: auto !important;
-            }
-            th, td {
-                padding: 8px 10px !important;
-                font-size: 0.9rem !important;
-                border: 1px solid #000 !important;
-            }
-            th {
-                background: #000 !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            tr {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-            .report-header {
-                margin-bottom: 20px !important;
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-            }
-            .report-title {
-                font-size: 1.6rem !important;
-                font-weight: bold !important;
-                color: #000 !important;
-            }
-            .status-summary {
-                flex-direction: row !important;
-                justify-content: space-around !important;
-                margin: 15px 0 !important;
-                padding: 10px !important;
-                background: white !important;
-                border: 1px solid #000 !important;
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-            }
-            .status-item {
-                border: 1px solid #000 !important;
-                padding: 8px !important;
-                min-width: 80px !important;
-            }
-            .status-count {
-                font-size: 1.2rem !important;
-                font-weight: bold !important;
-            }
-            .report-date {
-                color: #000 !important;
-                font-size: 1rem !important;
-                margin-top: 10px !important;
-                font-weight: bold !important;
-            }
-            /* ضمان عدم كسر الجداول */
-            tbody {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-            /* هوامش الصفحة */
-            @page {
-                margin: 15mm 10mm 15mm 10mm !important;
-                size: A4 portrait !important;
-            }
-            /* ضمان أن كل قسم يبدأ من صفحة جديدة إذا كان سيكسر */
-            .status-section:not(:first-child) {
-                page-break-before: auto !important;
-                break-before: auto !important;
-            }
-            /* تحسين الخطوط للطباعة */
-            body, table, th, td {
-                font-family: 'Times New Roman', Times, serif !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            /* إخفاء جميع العناصر غير الضرورية */
-            header, nav, footer, .sidebar, .ads, .buttons, .controls {
-                display: none !important;
-            }
+            @page { size: A4; margin: 10mm; }
+            body { background: white; padding: 0; -webkit-print-color-adjust: exact; }
+            .container { box-shadow: none; max-width: 100%; margin: 0; border-radius: 0; }
+            .app-header, .no-print, .action-buttons, .search-container, .nav-buttons, .status-buttons, .finish-btn, .upload-section, .input-screen { display: none !important; }
+            .results-screen { display: block !important; padding: 0 !important; }
+            .report-paper { border: none; shadow: none; padding: 0; margin: 0; }
+            
+            /* تنسيق الجداول عند الطباعة */
+            .report-table { border: 2px solid #000; }
+            .report-table th { background-color: #e0e0e0 !important; border: 1px solid #000; color: black; }
+            .report-table td { border: 1px solid #000; color: black; }
+            .section-header { background-color: #333 !important; color: white !important; border: 1px solid #000; border-bottom: none; }
+            
+            .official-header { border-bottom: 2px solid black; }
         }
     </style>
 </head>
 <body>
+    <div class="overlay" id="overlay"></div>
+
     <div class="container">
-        <!-- شاشة اختيار المخزن -->
-        <div id="upload-screen">
-            <header>
-                <h1>نظام إدارة مخازن الصيدلة</h1>
-                <p>البيانات من مستودع GitHub: kingkopra00/avalible-not-avalable</p>
-            </header>
-            <div class="upload-section">
-                <div class="warehouse-select">
-                    <label>اختر المخزن:</label><br>
-                    <select id="warehouse-select">
-                        <option value="">-- اختر المخزن --</option>
-                        <option value="antibiotics">المضادات الحيوية</option>
-                        <option value="antiseptics">المطهرات</option>
-                        <option value="fluids">المحاليل والسوائل</option>
-                        <option value="suspentions">المساحيق</option>
-                        <option value="tables">الأقراص</option>
-                        <option value="vials">الامبولات و الفيالات</option>
-                    </select>
+        <header class="app-header no-print">
+            <h1>📦 نظام الجرد الصيدلاني</h1>
+        </header>
+        
+        <div id="upload-screen" class="upload-section">
+            <div style="text-align: center; margin-top: 40px;">
+                <label style="font-size: 1.2rem; font-weight: bold; color: var(--accent);">اختر القسم:</label><br>
+                <select id="warehouse-select">
+                    <option value="">-- اختر المخزن --</option>
+                    <option value="antibiotics">💊 المضادات الحيوية</option>
+                    <option value="antiseptics">🧴 المطهرات</option>
+                    <option value="fluids">💧 المحاليل والسوائل</option>
+                    <option value="suspentions">🧪 المساحيق (Suspensions)</option>
+                    <option value="tables">💊 الأقراص (Tablets)</option>
+                    <option value="vials">💉 الامبولات والفيالات</option>
+                </select>
+                
+                <div id="recovery-msg" style="display:none; color: #d35400; background: #fadbd8; padding: 10px; margin: 15px auto; border-radius: 8px; max-width: 450px;">
+                    ⚠️ يوجد بيانات محفوظة مسبقاً لهذا المخزن
+                    <button id="clear-data-btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">حذف والبدء من جديد</button>
                 </div>
-                <button class="start-btn" id="start-btn" disabled>تحميل البيانات وبدء الإدخال</button>
-            </div>
-            <div class="designer-footer">
-                مصمم البرنامج: علي محمد حسن الناجي
+
+                <br>
+                <button class="start-btn" id="start-btn" disabled>🚀 تحميل البيانات</button>
             </div>
         </div>
 
-        <!-- شاشة إدخال الحالة -->
         <div id="input-screen" class="input-screen">
-            <div class="warehouse-title" id="current-warehouse-title">جاري التحميل...</div>
-            <div class="material-name" id="current-material">جاري التحميل...</div>
+            <div style="display:flex; justify-content:space-between; color: #7f8c8d; font-size: 0.9rem; margin-bottom: 10px;">
+                <span>القسم: <strong id="current-warehouse-title" style="color: var(--accent);">...</strong></span>
+                <span id="item-counter">0 / 0</span>
+            </div>
             
-            <div class="current-status-display status-none-display" id="current-status-display">
-                لم يتم إدخال الحالة بعد
+            <div class="search-container no-print">
+                <input type="text" id="smart-search" class="search-input" placeholder="🔍 بحث سريع (اسم المادة)...">
+                <div id="search-suggestions" class="suggestions-list"></div>
             </div>
 
-            <div class="status-buttons">
-                <button class="status-btn btn-available" data-status="available">متوفر</button>
-                <button class="status-btn btn-shortage" data-status="shortage">شحيح</button>
-                <button class="status-btn btn-missing" data-status="missing">مفقود</button>
-                <button class="status-btn btn-quantity" id="quantity-btn">إدخال الكمية</button>
+            <div class="material-card">
+                <div class="material-name" id="current-material">...</div>
+                <div class="current-status-display status-none-display" id="current-status-display">لم يتم الجرد</div>
             </div>
-            
+
+            <div class="status-buttons no-print">
+                <button class="status-btn btn-available" onclick="setStatus('available')">✅ متوفر (1)</button>
+                <button class="status-btn btn-shortage" onclick="setStatus('shortage')">⚠️ شحيح (2)</button>
+                <button class="status-btn btn-missing" onclick="setStatus('missing')">❌ مفقود (3)</button>
+                <button class="status-btn btn-quantity" id="quantity-btn">🔢 عدد (4)</button>
+            </div>
+
             <div class="quantity-section" id="quantity-section">
-                <input type="text" id="quantity-input" class="quantity-input" placeholder="أدخل الكمية (أرقام فقط)" inputmode="numeric">
-                <button class="quantity-submit" id="quantity-submit">إدخال</button>
+                <h3 style="margin-bottom: 15px;">أدخل الكمية</h3>
+                <input type="text" id="quantity-input" style="width: 100%; padding: 10px; font-size: 1.5rem; text-align: center; margin-bottom: 15px;" placeholder="0" inputmode="numeric">
+                <button class="start-btn" id="quantity-submit" style="width: 100%; margin: 0;">حفظ</button>
             </div>
 
-            <div class="nav-buttons">
-                <button class="nav-btn" id="prev-btn" disabled>السابق</button>
-                <button class="nav-btn" id="next-btn">التالي</button>
-            </div>
-            <button class="finish-btn" id="finish-btn">إنهاء وإظهار التقرير</button>
-            <div class="designer-footer">
-                مصمم البرنامج: علي محمد حسن الناجي
+            <div class="nav-buttons no-print">
+                <button class="nav-btn" id="prev-btn">➡️ السابق</button>
+                <button class="finish-btn" id="finish-btn" style="margin:0; padding: 10px 30px;">✅ إنهاء التقرير</button>
+                <button class="nav-btn" id="next-btn">التالي ⬅️</button>
             </div>
         </div>
 
-        <!-- شاشة النتائج -->
-        <div id="results-screen" class="results-screen">
-            <div class="report-header">
-                <div class="report-title" id="report-warehouse-title">مخزن الحياتية</div>
-                <div class="status-summary">
-                    <div class="status-item status-available">
-                        <div>المتوفر</div>
-                        <div class="status-count" id="count-available">0</div>
+        <div id="results-screen" class="results-screen" style="display: none;">
+            <div class="report-paper">
+                <div class="official-header">
+                    <div class="oh-side">
+                        <p>جمهورية العراق</p>
+                        <p>وزارة الصحة</p>
+                        <p>دائرة صحة المثنى</p>
                     </div>
-                    <div class="status-item status-shortage">
-                        <div>الشحيح</div>
-                        <div class="status-count" id="count-shortage">0</div>
-                    </div>
-                    <div class="status-item status-missing">
-                        <div>المفقود</div>
-                        <div class="status-count" id="count-missing">0</div>
+                    <div class="oh-center">☤</div>
+                    <div class="oh-side">
+                        <p>التاريخ: <span id="header-date"></span></p>
+                        <p>العدد: .............</p>
                     </div>
                 </div>
-                <div class="report-date" id="report-date">1 يناير 2025</div>
+
+                <h2 class="report-title">موقف مخزن <span id="report-wh-name"></span></h2>
+
+                <div class="status-summary">
+                    <div class="status-card">
+                        <div style="color: var(--success); font-weight: bold;">المواد المتوفرة</div>
+                        <span class="sc-count" id="count-available">0</span>
+                    </div>
+                    <div class="status-card">
+                        <div style="color: var(--warning); font-weight: bold;">المواد الشحيحة</div>
+                        <span class="sc-count" id="count-shortage">0</span>
+                    </div>
+                    <div class="status-card">
+                        <div style="color: var(--danger); font-weight: bold;">المواد المفقودة</div>
+                        <span class="sc-count" id="count-missing">0</span>
+                    </div>
+                </div>
+
+                <div id="report-content"></div>
+
+                <div class="official-footer">
+                    <div class="sig-box">
+                        <p>منظم القائمة</p>
+                        <div class="sig-line"></div>
+                    </div>
+                    <div class="sig-box">
+                        <p>مسؤول المخزن</p>
+                        <div class="sig-line"></div>
+                    </div>
+                    <div class="sig-box">
+                        <p>مدير القسم</p>
+                        <div class="sig-line"></div>
+                    </div>
+                </div>
             </div>
 
-            <div id="available-section" class="status-section" style="display: none;">
-                <div class="status-section-title section-available">المواد المتوفرة</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>اسم المادة</th>
-                            <th>الكمية</th>
-                        </tr>
-                    </thead>
-                    <tbody id="available-body">
-                        <!-- يتم ملؤها لاحقًا -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="shortage-section" class="status-section" style="display: none;">
-                <div class="status-section-title section-shortage">المواد الشحيحة</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>اسم المادة</th>
-                            <th>الكمية</th>
-                        </tr>
-                    </thead>
-                    <tbody id="shortage-body">
-                        <!-- يتم ملؤها لاحقًا -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="missing-section" class="status-section" style="display: none;">
-                <div class="status-section-title section-missing">المواد المفقودة</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>اسم المادة</th>
-                        </tr>
-                    </thead>
-                    <tbody id="missing-body">
-                        <!-- يتم ملؤها لاحقًا -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="action-buttons">
-                <button class="action-btn print-btn" id="print-btn">طباعة</button>
-                <button class="action-btn export-excel-btn" id="export-excel-btn">تصدير Excel</button>
-                <button class="action-btn export-pdf-btn" id="export-pdf-btn">تصدير PDF</button>
-                <button class="action-btn back-btn" id="back-to-upload">العودة للاختيار</button>
-            </div>
-            <div class="designer-footer">
-                مصمم البرنامج: علي محمد حسن الناجي
+            <div class="action-buttons no-print">
+                <button class="action-btn" style="background: #2c3e50;" id="print-all-btn">🖨️ طباعة رسمية / PDF</button>
+                <button class="action-btn" style="background: #27ae60;" id="export-excel-btn">📊 تصدير Excel</button>
+                <button class="action-btn" style="background: #c0392b;" onclick="location.reload()">🏠 خروج</button>
             </div>
         </div>
     </div>
 
     <script>
-        let currentWarehouse = '';
-        let materials = [];
-        let currentIndex = 0;
-        let results = {};
-        let currentReportDate = new Date();
-
-        const warehouseNames = {
-            'antibiotics': 'المضادات الحيوية',
-            'antiseptics': 'المطهرات',
-            'fluids': 'المحاليل والسوائل',
-            'suspentions': 'المساحيق',
-            'tables': 'الأقراص',
-            'vials': 'الامبولات و الفيالات'
-        };
-
-        // التصحيح: روابط الملفات الصحيحة من مستودع GitHub
         const githubBaseUrl = 'https://raw.githubusercontent.com/kingkopra00/avalible-not-avalable/main/';
         const fileMap = {
-            'antibiotics': 'antibiotics.xlsx',
-            'antiseptics': 'antiseptics.xlsx',
-            'fluids': 'fluids.xlsx',
-            'suspentions': 'suspentions.xlsx',
-            'tables': 'tables.xlsx',
-            'vials': 'vials.xlsx'
+            'antibiotics': 'antibiotics.xlsx', 'antiseptics': 'antiseptics.xlsx',
+            'fluids': 'fluids.xlsx', 'suspentions': 'suspentions.xlsx',
+            'tables': 'tables.xlsx', 'vials': 'vials.xlsx'
+        };
+        const warehouseNames = {
+            'antibiotics': 'المضادات الحيوية', 'antiseptics': 'المطهرات',
+            'fluids': 'المحاليل والسوائل', 'suspentions': 'المساحيق',
+            'tables': 'الأقراص', 'vials': 'الامبولات والفيالات'
         };
 
-        const uploadScreen = document.getElementById('upload-screen');
-        const inputScreen = document.getElementById('input-screen');
-        const resultsScreen = document.getElementById('results-screen');
-        const warehouseSelect = document.getElementById('warehouse-select');
-        const startBtn = document.getElementById('start-btn');
-        const currentWarehouseTitle = document.getElementById('current-warehouse-title');
-        const currentMaterialDiv = document.getElementById('current-material');
-        const currentStatusDisplay = document.getElementById('current-status-display');
-        const quantityBtn = document.getElementById('quantity-btn');
-        const quantitySection = document.getElementById('quantity-section');
-        const quantityInput = document.getElementById('quantity-input');
-        const quantitySubmit = document.getElementById('quantity-submit');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const finishBtn = document.getElementById('finish-btn');
-        const reportWarehouseTitle = document.getElementById('report-warehouse-title');
-        const reportDate = document.getElementById('report-date');
-        const countAvailable = document.getElementById('count-available');
-        const countShortage = document.getElementById('count-shortage');
-        const countMissing = document.getElementById('count-missing');
-        const availableSection = document.getElementById('available-section');
-        const shortageSection = document.getElementById('shortage-section');
-        const missingSection = document.getElementById('missing-section');
-        const availableBody = document.getElementById('available-body');
-        const shortageBody = document.getElementById('shortage-body');
-        const missingBody = document.getElementById('missing-body');
-        const printBtn = document.getElementById('print-btn');
-        const exportExcelBtn = document.getElementById('export-excel-btn');
-        const exportPdfBtn = document.getElementById('export-pdf-btn');
-        const backToUpload = document.getElementById('back-to-upload');
+        let materials = [];
+        let inventoryData = {};
+        let currentIndex = 0;
+        let currentWarehouse = '';
 
-        // دالة لتحويل الأرقام الإنجليزية إلى عربية
-        function toArabicNumbers(str) {
-            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-            return str.replace(/\d/g, match => arabicNumbers[match]);
+        const els = {
+            uploadScreen: document.getElementById('upload-screen'),
+            inputScreen: document.getElementById('input-screen'),
+            resultsScreen: document.getElementById('results-screen'),
+            warehouseSelect: document.getElementById('warehouse-select'),
+            startBtn: document.getElementById('start-btn'),
+            clearDataBtn: document.getElementById('clear-data-btn'),
+            currentMaterial: document.getElementById('current-material'),
+            statusDisplay: document.getElementById('current-status-display'),
+            itemCounter: document.getElementById('item-counter'),
+            searchInput: document.getElementById('smart-search'),
+            suggestionsBox: document.getElementById('search-suggestions'),
+            qtySection: document.getElementById('quantity-section'),
+            qtyInput: document.getElementById('quantity-input'),
+            recoveryMsg: document.getElementById('recovery-msg'),
+            overlay: document.getElementById('overlay')
+        };
+
+        function getFormattedDate() {
+            const d = new Date();
+            const toArabic = n => n.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+            return `${toArabic(d.getDate())}/${toArabic(d.getMonth()+1)}/${toArabic(d.getFullYear())}`;
         }
 
-        warehouseSelect.addEventListener('change', () => {
-            startBtn.disabled = !warehouseSelect.value;
-        });
-
-        async function loadMaterialsFromGitHub(filename) {
-            const url = githubBaseUrl + filename;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`فشل تحميل الملف: ${response.status} ${response.statusText}`);
-                const data = await response.arrayBuffer();
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                const items = [];
-                for (let i = 1; i < jsonData.length; i++) {
-                    const row = jsonData[i];
-                    if (row && row[0] && row[0].toString().trim()) {
-                        items.push(row[0].toString().trim());
-                    }
-                }
-                return items;
-            } catch (err) {
-                throw new Error('خطأ في تحميل ملف المخزن من GitHub: ' + err.message);
-            }
+        function getFileName(ext) {
+            const date = new Date();
+            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const dayName = days[date.getDay()];
+            const dStr = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`;
+            const name = `موقف مخزن ${warehouseNames[currentWarehouse]} يوم ${dayName} ${dStr}`;
+            return ext ? `${name}.${ext}` : name;
         }
 
-        startBtn.addEventListener('click', async function() {
-            currentWarehouse = warehouseSelect.value;
-            const filename = fileMap[currentWarehouse];
-            try {
-                materials = await loadMaterialsFromGitHub(filename);
-                if (materials.length === 0) {
-                    alert('الملف فارغ أو لا يحتوي على مواد صالحة!');
-                    return;
-                }
-                results = {};
-                currentIndex = 0;
-                displayCurrentMaterial();
-                uploadScreen.style.display = 'none';
-                inputScreen.style.display = 'block';
-            } catch (err) {
-                console.error(err);
-                alert('فشل تحميل البيانات من GitHub. تأكد من اتصال الإنترنت وصحة الرابط.');
+        els.warehouseSelect.addEventListener('change', () => {
+            currentWarehouse = els.warehouseSelect.value;
+            els.startBtn.disabled = !currentWarehouse;
+            if (currentWarehouse) {
+                const saved = localStorage.getItem('inv_' + currentWarehouse);
+                els.recoveryMsg.style.display = saved ? 'block' : 'none';
+                els.startBtn.textContent = saved ? "📂 استكمال الجرد" : "🚀 تحميل البيانات";
             }
         });
 
-        function displayCurrentMaterial() {
-            currentWarehouseTitle.textContent = `مخزن ${warehouseNames[currentWarehouse]}`;
-            currentMaterialDiv.textContent = materials[currentIndex];
-            
-            prevBtn.disabled = currentIndex === 0;
-            nextBtn.disabled = currentIndex === materials.length - 1;
+        els.clearDataBtn.addEventListener('click', () => {
+            if (confirm('حذف البيانات القديمة والبدء من جديد؟')) {
+                localStorage.removeItem('inv_' + currentWarehouse);
+                els.recoveryMsg.style.display = 'none';
+                els.startBtn.textContent = "🚀 تحميل البيانات";
+            }
+        });
 
-            const saved = results[currentIndex];
-            if (saved) {
-                let statusText = '';
-                let className = '';
-                if (saved.status === 'available') {
-                    statusText = 'الحالة: متوفر';
-                    className = 'status-available-display';
-                } else if (saved.status === 'shortage') {
-                    statusText = 'الحالة: شحيح';
-                    className = 'status-shortage-display';
-                } else if (saved.status === 'missing') {
-                    statusText = 'الحالة: مفقود';
-                    className = 'status-missing-display';
-                }
-
-                if (saved.quantity !== null) {
-                    statusText += ` | الكمية: ${saved.quantity}`;
-                }
-
-                currentStatusDisplay.textContent = statusText;
-                currentStatusDisplay.className = 'current-status-display ' + className;
+        els.startBtn.addEventListener('click', async () => {
+            els.startBtn.textContent = "⏳ جاري التحميل...";
+            els.startBtn.disabled = true;
+            try {
+                const savedData = localStorage.getItem('inv_' + currentWarehouse);
+                const response = await fetch(githubBaseUrl + fileMap[currentWarehouse]);
+                if (!response.ok) throw new Error("خطأ في الاتصال");
+                const buffer = await response.arrayBuffer();
+                const wb = XLSX.read(buffer, { type: 'array' });
+                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+                materials = json.slice(1).map(r => r[0] ? r[0].toString().trim() : null).filter(Boolean);
                 
-                if (saved.quantity !== null) {
-                    quantitySection.style.display = 'block';
-                    quantityInput.value = saved.quantity;
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    inventoryData = parsed.data || {};
+                    currentIndex = parsed.index || 0;
+                    if (currentIndex >= materials.length) currentIndex = 0;
                 } else {
-                    quantitySection.style.display = 'none';
+                    inventoryData = {};
+                    currentIndex = 0;
                 }
-            } else {
-                currentStatusDisplay.textContent = 'لم يتم إدخال الحالة بعد';
-                currentStatusDisplay.className = 'current-status-display status-none-display';
-                quantitySection.style.display = 'none';
+
+                els.uploadScreen.style.display = 'none';
+                els.inputScreen.style.display = 'block';
+                document.getElementById('current-warehouse-title').textContent = warehouseNames[currentWarehouse];
+                updateDisplay();
+            } catch (e) {
+                alert("خطأ: " + e.message);
+                els.startBtn.textContent = "🚀 تحميل البيانات";
+                els.startBtn.disabled = false;
             }
+        });
+
+        function save() {
+            localStorage.setItem('inv_' + currentWarehouse, JSON.stringify({ data: inventoryData, index: currentIndex }));
         }
 
-        document.querySelectorAll('.status-btn[data-status]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const status = this.dataset.status;
-                results[currentIndex] = { status, quantity: null };
+        function updateDisplay() {
+            if (!materials[currentIndex]) return;
+            els.currentMaterial.textContent = materials[currentIndex];
+            els.itemCounter.textContent = `${currentIndex + 1} / ${materials.length}`;
+            
+            document.getElementById('prev-btn').disabled = currentIndex === 0;
+            document.getElementById('next-btn').disabled = currentIndex === materials.length - 1;
+
+            const saved = inventoryData[currentIndex];
+            els.statusDisplay.className = 'current-status-display';
+            if (saved) {
+                if (saved.status === 'available') {
+                    els.statusDisplay.innerHTML = '✅ متوفر'; els.statusDisplay.classList.add('status-available-display');
+                } else if (saved.status === 'shortage') {
+                    els.statusDisplay.innerHTML = '⚠️ شحيح'; els.statusDisplay.classList.add('status-shortage-display');
+                } else {
+                    els.statusDisplay.innerHTML = '❌ مفقود'; els.statusDisplay.classList.add('status-missing-display');
+                }
+                if (saved.quantity !== null) els.statusDisplay.innerHTML += ` (${saved.quantity})`;
+            } else {
+                els.statusDisplay.textContent = 'لم يتم الجرد';
+                els.statusDisplay.classList.add('status-none-display');
+            }
+            
+            els.qtySection.style.display = 'none';
+            els.overlay.style.display = 'none';
+            els.searchInput.value = '';
+            els.suggestionsBox.style.display = 'none';
+        }
+
+        window.setStatus = function(status) {
+            inventoryData[currentIndex] = { status, quantity: null };
+            save();
+            updateDisplay();
+            setTimeout(() => {
                 if (currentIndex < materials.length - 1) {
                     currentIndex++;
-                    displayCurrentMaterial();
+                    save();
+                    updateDisplay();
                 } else {
-                    alert('تم الوصول إلى آخر مادة. يمكنك إنهاء التقرير الآن.');
+                    const fb = document.getElementById('finish-btn');
+                    fb.style.backgroundColor = '#2980b9';
+                    fb.style.transform = 'scale(1.1)';
+                    setTimeout(() => { fb.style.transform = 'scale(1)'; }, 300);
                 }
-            });
-        });
+            }, 200);
+        };
 
-        quantityBtn.addEventListener('click', function() {
-            quantitySection.style.display = 'block';
-            quantityInput.value = results[currentIndex]?.quantity || '';
-            quantityInput.focus();
-        });
+        document.getElementById('next-btn').onclick = () => { if(currentIndex < materials.length-1) { currentIndex++; save(); updateDisplay(); }};
+        document.getElementById('prev-btn').onclick = () => { if(currentIndex > 0) { currentIndex--; save(); updateDisplay(); }};
 
-        quantitySubmit.addEventListener('click', function() {
-            const inputVal = quantityInput.value.trim();
-            if (!inputVal) {
-                alert('الرجاء إدخال رقم');
-                return;
-            }
-            const arabicToWestern = { '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
-            let westernDigits = inputVal.replace(/[٠-٩]/g, d => arabicToWestern[d]);
-            const digitsOnly = westernDigits.replace(/\D/g, '');
-            if (digitsOnly === '') {
-                alert('الرجاء إدخال رقم صحيح');
-                return;
-            }
-            const qty = parseInt(digitsOnly);
-            let status = 'available';
-            if (qty === 0) status = 'missing';
-            else if (qty <= 5) status = 'shortage';
-            results[currentIndex] = { status, quantity: qty };
-            if (currentIndex < materials.length - 1) {
-                currentIndex++;
-                displayCurrentMaterial();
-            } else {
-                alert('تم الوصول إلى آخر مادة. يمكنك إنهاء التقرير الآن.');
-            }
-        });
-
-        quantityInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                quantitySubmit.click();
-            }
-        });
-
-        prevBtn.addEventListener('click', function() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                displayCurrentMaterial();
-            }
-        });
-
-        nextBtn.addEventListener('click', function() {
-            if (currentIndex < materials.length - 1) {
-                currentIndex++;
-                displayCurrentMaterial();
-            }
-        });
-
-        finishBtn.addEventListener('click', function() {
-            currentReportDate = new Date();
-            generateReport();
-            inputScreen.style.display = 'none';
-            resultsScreen.style.display = 'block';
-        });
-
-        function generateReport() {
-            reportWarehouseTitle.textContent = `مخزن ${warehouseNames[currentWarehouse]}`;
+        document.getElementById('quantity-btn').onclick = () => {
+            els.qtySection.style.display = 'block';
+            els.overlay.style.display = 'block';
+            els.qtyInput.value = inventoryData[currentIndex]?.quantity || '';
+            els.qtyInput.focus();
+        };
+        
+        document.getElementById('quantity-submit').onclick = () => {
+            let val = els.qtyInput.value.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+            const qty = parseInt(val.replace(/\D/g, ''));
+            if (isNaN(qty)) return alert('يرجى إدخال رقم');
             
-            const formatter = new Intl.DateTimeFormat('ar-SA', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
-                calendar: 'gregory'
+            const status = qty === 0 ? 'missing' : (qty <= 5 ? 'shortage' : 'available');
+            inventoryData[currentIndex] = { status, quantity: qty };
+            save();
+            updateDisplay();
+            setTimeout(() => {
+                if (currentIndex < materials.length - 1) {
+                    currentIndex++;
+                    save();
+                    updateDisplay();
+                }
+            }, 200);
+        };
+
+        els.overlay.onclick = () => { els.qtySection.style.display='none'; els.overlay.style.display='none'; };
+
+        els.searchInput.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            els.suggestionsBox.innerHTML = '';
+            if(q.length < 2) { els.suggestionsBox.style.display = 'none'; return; }
+            const matches = materials.map((m, i) => ({m, i})).filter(x => x.m.toLowerCase().includes(q)).slice(0,8);
+            if(matches.length) {
+                els.suggestionsBox.style.display = 'block';
+                matches.forEach(h => {
+                    const d = document.createElement('div');
+                    d.className = `suggestion-item ${inventoryData[h.i] ? 'completed' : ''}`;
+                    d.innerHTML = `<span>${h.m}</span> ${inventoryData[h.i] ? '✅' : ''}`;
+                    d.onclick = () => { currentIndex = h.i; updateDisplay(); };
+                    els.suggestionsBox.appendChild(d);
+                });
+            } else els.suggestionsBox.style.display = 'none';
+        });
+
+        document.getElementById('finish-btn').onclick = () => {
+            if (!confirm('عرض التقرير النهائي؟')) return;
+            els.inputScreen.style.display = 'none';
+            els.resultsScreen.style.display = 'block';
+            renderReport();
+        };
+
+        function renderReport() {
+            document.getElementById('report-wh-name').textContent = warehouseNames[currentWarehouse];
+            document.getElementById('header-date').textContent = getFormattedDate();
+
+            const cats = { available: [], shortage: [], missing: [] };
+            materials.forEach((m, i) => {
+                if (inventoryData[i]) cats[inventoryData[i].status].push({ name: m, qty: inventoryData[i].quantity });
             });
-            const gregorianDate = formatter.format(currentReportDate);
-            reportDate.textContent = `تاريخ التقرير: ${gregorianDate}`;
 
-            // تصنيف المواد حسب الحالة
-            const availableItems = [];
-            const shortageItems = [];
-            const missingItems = [];
+            document.getElementById('count-available').textContent = cats.available.length;
+            document.getElementById('count-shortage').textContent = cats.shortage.length;
+            document.getElementById('count-missing').textContent = cats.missing.length;
 
-            materials.forEach((material, i) => {
-                const item = results[i] || { status: 'غير مدخل', quantity: null };
-                if (item.status === 'available') {
-                    availableItems.push({ name: material, quantity: item.quantity });
-                } else if (item.status === 'shortage') {
-                    shortageItems.push({ name: material, quantity: item.quantity });
-                } else if (item.status === 'missing') {
-                    missingItems.push({ name: material, quantity: item.quantity });
+            const content = document.getElementById('report-content');
+            content.innerHTML = '';
+
+            const sections = [
+                { id: 'available', title: '✅ المواد المتوفرة', list: cats.available, color: '#27ae60' },
+                { id: 'shortage', title: '⚠️ المواد الشحيحة', list: cats.shortage, color: '#e67e22' },
+                { id: 'missing', title: '❌ المواد المفقودة', list: cats.missing, color: '#c0392b' }
+            ];
+
+            sections.forEach(sec => {
+                if (sec.list.length) {
+                    let html = `<div class="section-block"><div class="section-header" style="background:${sec.color}">${sec.title}</div>
+                    <table class="report-table"><thead><tr><th>ت</th><th>اسم المادة</th><th>الملاحظات</th></tr></thead><tbody>`;
+                    sec.list.forEach((item, idx) => {
+                        // Display Logic: Number OR Explicit Text
+                        let displayVal = item.qty;
+                        if (displayVal === null) {
+                            if (sec.id === 'available') displayVal = 'متوفر';
+                            else if (sec.id === 'shortage') displayVal = 'شحيح';
+                            else if (sec.id === 'missing') displayVal = 'مفقود';
+                        }
+                        
+                        html += `<tr><td>${idx + 1}</td><td style="text-align:right">${item.name}</td><td>${displayVal}</td></tr>`;
+                    });
+                    html += `</tbody></table></div>`;
+                    content.innerHTML += html;
                 }
             });
-
-            // حساب الإحصائيات
-            countAvailable.textContent = availableItems.length;
-            countShortage.textContent = shortageItems.length;
-            countMissing.textContent = missingItems.length;
-
-            // ترتيب المواد أبجدياً
-            availableItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-            shortageItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-            missingItems.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-
-            // عرض المواد المتوفرة
-            if (availableItems.length > 0) {
-                availableSection.style.display = 'block';
-                availableBody.innerHTML = '';
-                availableItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.quantity !== null ? item.quantity : 'متوفر'}</td>
-                    `;
-                    availableBody.appendChild(row);
-                });
-            } else {
-                availableSection.style.display = 'none';
-            }
-
-            // عرض المواد الشحيحة
-            if (shortageItems.length > 0) {
-                shortageSection.style.display = 'block';
-                shortageBody.innerHTML = '';
-                shortageItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.quantity !== null ? item.quantity : 'شحيح'}</td>
-                    `;
-                    shortageBody.appendChild(row);
-                });
-            } else {
-                shortageSection.style.display = 'none';
-            }
-
-            // عرض المواد المفقودة
-            if (missingItems.length > 0) {
-                missingSection.style.display = 'block';
-                missingBody.innerHTML = '';
-                missingItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${item.name}</td>`;
-                    missingBody.appendChild(row);
-                });
-            } else {
-                missingSection.style.display = 'none';
-            }
         }
 
-        printBtn.addEventListener('click', function() {
-            // تحسين الطباعة: ضمان تحميل كل المحتوى قبل الطباعة
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        });
+        document.getElementById('print-all-btn').onclick = () => {
+            const t = document.title;
+            document.title = getFileName(null);
+            window.print();
+            document.title = t;
+        };
 
-        exportExcelBtn.addEventListener('click', function() {
-            const wsData = [];
-            wsData.push(['اسم المادة', 'الحالة', 'الكمية']);
-            
-            materials.forEach((material, i) => {
-                const item = results[i] || { status: 'غير مدخل', quantity: null };
-                let statusText = '';
-                if (item.status === 'available') statusText = 'متوفر';
-                else if (item.status === 'shortage') statusText = 'شحيح';
-                else if (item.status === 'missing') statusText = 'مفقود';
-                else statusText = 'غير مدخل';
-                wsData.push([material, statusText, item.quantity || '']);
-            });
-
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
+        document.getElementById('export-excel-btn').onclick = () => {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "تقرير المخزن");
-            
-            // إنشاء اسم الملف بالتنسيق المطلوب
-            const dayName = currentReportDate.toLocaleDateString('ar-SA', { weekday: 'long' });
-            const day = currentReportDate.getDate().toString();
-            const month = (currentReportDate.getMonth() + 1).toString();
-            const year = currentReportDate.getFullYear().toString();
-            
-            const filename = `مخزن ${warehouseNames[currentWarehouse]}-${dayName} ${toArabicNumbers(day)}-${toArabicNumbers(month)}-${toArabicNumbers(year)}.xlsx`;
-            XLSX.writeFile(wb, filename);
-        });
-
-        exportPdfBtn.addEventListener('click', function() {
-            // الحصول على أسماء الأيام باللغة العربية
-            const arabicDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            const dayName = arabicDays[currentReportDate.getDay()];
-            const day = currentReportDate.getDate().toString();
-            const month = (currentReportDate.getMonth() + 1).toString();
-            const year = currentReportDate.getFullYear().toString();
-            
-            const filename = `مخزن ${warehouseNames[currentWarehouse]}-${dayName} ${toArabicNumbers(day)}-${toArabicNumbers(month)}-${toArabicNumbers(year)}.pdf`;
-            
-            alert('جاري إنشاء ملف PDF. يرجى الانتظار...');
-            
-            // نسخ المحتوى الحالي للشاشة النتائج
-            const printContent = document.createElement('div');
-            printContent.innerHTML = resultsScreen.innerHTML;
-            printContent.style.padding = '20px';
-            printContent.style.width = '750px';
-            printContent.style.margin = '0 auto';
-            printContent.style.fontFamily = "'Times New Roman', Times, serif";
-            printContent.style.direction = 'rtl';
-            printContent.style.backgroundColor = 'white';
-            
-            // إخفاء أزرار التحكم في النسخة المؤقتة
-            const actionButtons = printContent.querySelector('.action-buttons');
-            const designerFooter = printContent.querySelector('.designer-footer');
-            if (actionButtons) actionButtons.style.display = 'none';
-            if (designerFooter) designerFooter.style.display = 'none';
-            
-            // إضافة النسخة المؤقتة إلى الهيكل
-            document.body.appendChild(printContent);
-            printContent.style.position = 'absolute';
-            printContent.style.left = '-9999px';
-            printContent.style.top = '-9999px';
-            
-            // استخدام html2canvas لإنشاء صورة من المحتوى
-            html2canvas(printContent, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                onclone: function(document) {
-                    // يمكن إضافة أي تعديلات إضافية هنا
+            const data = [['ت', 'اسم المادة', 'الحالة', 'الرصيد / الملاحظات']];
+            materials.forEach((m, i) => {
+                if (inventoryData[i]) {
+                    const s = inventoryData[i].status;
+                    const sAr = s==='available'?'متوفر':(s==='shortage'?'شحيح':'مفقود');
+                    let val = inventoryData[i].quantity;
+                    if(val === null) val = sAr; // Write text if no number
+                    data.push([i+1, m, sAr, val]);
                 }
-            }).then(function(canvas) {
-                // إزالة النسخة المؤقتة
-                document.body.removeChild(printContent);
-                
-                try {
-                    // إنشاء ملف PDF
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF.jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'a4'
-                    });
-                    
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save(filename);
-                    
-                    alert('تم إنشاء ملف PDF بنجاح!');
-                } catch (error) {
-                    console.error('خطأ في إنشاء PDF:', error);
-                    alert('حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
-                }
-            }).catch(function(error) {
-                console.error('خطأ في التقاط الصورة:', error);
-                alert('حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
-                document.body.removeChild(printContent);
             });
-        });
-
-        backToUpload.addEventListener('click', function() {
-            resultsScreen.style.display = 'none';
-            uploadScreen.style.display = 'block';
-            warehouseSelect.value = '';
-            startBtn.disabled = true;
-        });
-
-        // تهيئة الواجهة عند التحميل
-        document.addEventListener('DOMContentLoaded', function() {
-            // يمكن إضافة أي تهيئات أولية هنا
-        });
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{wch:5}, {wch:50}, {wch:15}, {wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws, "Report");
+            XLSX.writeFile(wb, getFileName('xlsx'));
+        };
     </script>
 </body>
 </html>
