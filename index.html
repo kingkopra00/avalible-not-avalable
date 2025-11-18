@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام موقف الدوائي - الصيدلاني علي محمد حسن الناجي</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -319,22 +319,13 @@
             return `${toArabic(d.getDate())}/${toArabic(d.getMonth()+1)}/${toArabic(d.getFullYear())}`;
         }
 
-        // --- التحديث: تم تعديل الدالة أدناه لتتوافق مع تنسيق الاسم المطلوب ---
+        // --- دالة توليد الاسم المحدثة ---
         function getFileName(ext) {
             const d = new Date();
-            // تنسيق التاريخ: يوم-شهر-سنة (مثال: 18-11-2025)
             const dStr = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
-            
-            // جلب اسم المخزن
             let whName = warehouseNames[currentWarehouse] || 'عام';
-            
-            // استبدال المسافات بخطوط لضمان اسم ملف نظيف
-            // مثال: "المضادات الحيوية" تصبح "المضادات-الحيوية"
             whName = whName.replace(/\s+/g, '-');
-
-            // تكوين الاسم: موقف-مخزن-الاسم-التاريخ
             const name = `موقف-مخزن-${whName}-${dStr}`;
-            
             return ext ? `${name}.${ext}` : name;
         }
 
@@ -360,6 +351,11 @@
             els.startBtn.textContent = "⏳ جاري التحميل...";
             els.startBtn.disabled = true;
             try {
+                // التحقق مما إذا كانت المكتبة قد تم تحميلها
+                if (typeof XLSX === 'undefined') {
+                    throw new Error("لم يتم تحميل مكتبة Excel بشكل صحيح. تأكد من اتصال الإنترنت.");
+                }
+
                 const savedData = localStorage.getItem('inv_' + currentWarehouse);
                 const response = await fetch(githubBaseUrl + fileMap[currentWarehouse]);
                 if (!response.ok) throw new Error("خطأ في الاتصال");
@@ -522,14 +518,12 @@
                     let html = `<div class="section-block"><div class="section-header" style="background:${sec.color}">${sec.title}</div>
                     <table class="report-table"><thead><tr><th>ت</th><th>اسم المادة</th><th>الملاحظات</th></tr></thead><tbody>`;
                     sec.list.forEach((item, idx) => {
-                        // Display Logic: Number OR Explicit Text
                         let displayVal = item.qty;
                         if (displayVal === null) {
                             if (sec.id === 'available') displayVal = 'متوفر';
                             else if (sec.id === 'shortage') displayVal = 'شحيح';
                             else if (sec.id === 'missing') displayVal = 'مفقود';
                         }
-                        
                         html += `<tr><td>${idx + 1}</td><td style="text-align:right">${item.name}</td><td>${displayVal}</td></tr>`;
                     });
                     html += `</tbody></table></div>`;
@@ -553,7 +547,7 @@
                     const s = inventoryData[i].status;
                     const sAr = s==='available'?'متوفر':(s==='shortage'?'شحيح':'مفقود');
                     let val = inventoryData[i].quantity;
-                    if(val === null) val = sAr; // Write text if no number
+                    if(val === null) val = sAr; 
                     data.push([i+1, m, sAr, val]);
                 }
             });
