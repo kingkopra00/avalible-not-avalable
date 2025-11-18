@@ -319,7 +319,6 @@
             return `${toArabic(d.getDate())}/${toArabic(d.getMonth()+1)}/${toArabic(d.getFullYear())}`;
         }
 
-        // --- دالة توليد الاسم المحدثة ---
         function getFileName(ext) {
             const d = new Date();
             const dStr = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
@@ -351,7 +350,6 @@
             els.startBtn.textContent = "⏳ جاري التحميل...";
             els.startBtn.disabled = true;
             try {
-                // التحقق مما إذا كانت المكتبة قد تم تحميلها
                 if (typeof XLSX === 'undefined') {
                     throw new Error("لم يتم تحميل مكتبة Excel بشكل صحيح. تأكد من اتصال الإنترنت.");
                 }
@@ -495,6 +493,10 @@
             document.getElementById('report-wh-name').textContent = warehouseNames[currentWarehouse];
             document.getElementById('header-date').textContent = getFormattedDate();
 
+            // === التحديث الهام هنا: تغيير عنوان الصفحة فور عرض التقرير ===
+            // هذا يضمن أن الآيفون يرى الاسم الجديد قبل ضغط زر الطباعة
+            document.title = getFileName(null);
+
             const cats = { available: [], shortage: [], missing: [] };
             materials.forEach((m, i) => {
                 if (inventoryData[i]) cats[inventoryData[i].status].push({ name: m, qty: inventoryData[i].quantity });
@@ -533,10 +535,7 @@
         }
 
         document.getElementById('print-all-btn').onclick = () => {
-            const t = document.title;
-            document.title = getFileName(null);
             window.print();
-            document.title = t;
         };
 
         document.getElementById('export-excel-btn').onclick = () => {
