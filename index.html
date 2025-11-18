@@ -319,12 +319,22 @@
             return `${toArabic(d.getDate())}/${toArabic(d.getMonth()+1)}/${toArabic(d.getFullYear())}`;
         }
 
+        // --- التحديث: تم تعديل الدالة أدناه لتتوافق مع تنسيق الاسم المطلوب ---
         function getFileName(ext) {
-            const date = new Date();
-            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            const dayName = days[date.getDay()];
-            const dStr = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`;
-            const name = `موقف مخزن ${warehouseNames[currentWarehouse]} يوم ${dayName} ${dStr}`;
+            const d = new Date();
+            // تنسيق التاريخ: يوم-شهر-سنة (مثال: 18-11-2025)
+            const dStr = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
+            
+            // جلب اسم المخزن
+            let whName = warehouseNames[currentWarehouse] || 'عام';
+            
+            // استبدال المسافات بخطوط لضمان اسم ملف نظيف
+            // مثال: "المضادات الحيوية" تصبح "المضادات-الحيوية"
+            whName = whName.replace(/\s+/g, '-');
+
+            // تكوين الاسم: موقف-مخزن-الاسم-التاريخ
+            const name = `موقف-مخزن-${whName}-${dStr}`;
+            
             return ext ? `${name}.${ext}` : name;
         }
 
